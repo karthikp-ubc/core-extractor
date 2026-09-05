@@ -1,0 +1,17 @@
+# SPEC.md §4 hard constraints:
+requests
+pandas
+beautifulsoup4
+plotly
+streamlit
+pyyaml
+pydantic
+pymupdf
+
+# Added beyond SPEC's declared constraints, needed for the chart-image
+# reading (stage2_metrics.py) and legacy-document/argument-coding LLM
+# calls (stage2b_docs.py) — see their module docstrings.
+anthropic
+
+# Test suite (SPEC.md §9).
+pytest

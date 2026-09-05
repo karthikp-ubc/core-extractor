@@ -1,0 +1,88 @@
+{
+  "source_file": "inputs/conext.html",
+  "core_id": "24",
+  "dblp_source_url": "https://dblp.uni-trier.de/db/conf/conext",
+  "round_blocks": [
+    {
+      "round": "ICORE2026",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n\n                                            (\nh-index\n)\n                                            (\ncitation\n)\n\n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2023",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n                                    \n                                        \n\n                                            (\nh-index\n)\n                                            (\ncitation\n)\n\n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2021",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2020",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2018",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 0805 - Distributed Computing†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2017",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 0805 - Distributed Computing†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2014",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 0805 - Distributed Computing†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2013",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A\n\n\nField Of Research: 0805 - Distributed Computing†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: ERA2010\n\n\nRank: A\n\n\nField Of Research: 0805 - Distributed Computing†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n FoR Codes with a \n † \n may be old and no longer in use\n\n\n\n\nComments (1)\n\n            Average User Rating: 5.0\n            \n\n\n\n\n\n\nWelcoming:\n\n\n5.0\n\n\n\n\n\n\nFeedback:\n\n\n5.0\n\n\n\n\n\n\nNetworking:\n\n\n5.0\n\n\n"
+    }
+  ],
+  "links_found": [
+    {
+      "round": "ICORE2026",
+      "link_type": "h_index",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2025/centiles_graphs/CoNEXT_24_h_index_FOR4606_centileGraph.png",
+      "anchor_text": "h-index"
+    },
+    {
+      "round": "ICORE2026",
+      "link_type": "citation",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2025/centiles_graphs/CoNEXT_24_cited_FOR4606_centileGraph.png",
+      "anchor_text": "citation"
+    },
+    {
+      "round": "CORE2023",
+      "link_type": "h_index",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2023/centiles_graphs/CoNEXT_24_h_index_FOR4606_centileGraph.png",
+      "anchor_text": "h-index"
+    },
+    {
+      "round": "CORE2023",
+      "link_type": "citation",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2023/centiles_graphs/CoNEXT_24_cited_FOR4606_centileGraph.png",
+      "anchor_text": "citation"
+    }
+  ],
+  "unmatched_short_anchors": [
+    {
+      "text": "Sign in with LinkedIn",
+      "href": "/conf-ranks/login"
+    },
+    {
+      "text": "Back to search",
+      "href": "https://portal.core.edu.au/conf-ranks/?search=4606&by=for&source=ICORE2026&sort=atitle&page=1"
+    }
+  ],
+  "issues": []
+}

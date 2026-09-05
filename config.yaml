@@ -1,0 +1,38 @@
+# ICORE Conference Metrics Explorer — shared configuration.
+#
+# Nothing in this project auto-fetches portal.core.edu.au (its robots.txt
+# disallows AI-agent user-agents site-wide — see stage1_core.py's module
+# docstring). The only stage that makes network calls at all is
+# stage3_verify.py, against OpenAlex's public API. `contact_email` below is
+# used ONLY there, as OpenAlex's documented polite-pool `mailto=` parameter.
+# It is never sent anywhere else. Fill in your own address before running
+# Stage 3 — left as a placeholder deliberately, not auto-populated.
+contact_email: "you@example.com"
+
+# Rounds in scope for *metrics* (Stage 2/2b/3/4) per SPEC.md §2 — the two
+# most recent rounds only. Stage 1b still records full rank history
+# regardless of this list. SPEC says not to hardcode round labels and to
+# read them off the search page's Source dropdown instead; since that page
+# isn't crawled, set this by hand after checking the dropdown yourself.
+in_scope_rounds:
+  - ICORE2026
+  - CORE2023
+
+paths:
+  inputs_dir: inputs
+  data_dir: data
+  cache_dir: cache
+  images_dir: images
+  pdfs_dir: pdfs
+  extracted_dir: extracted
+
+rate_limit_seconds: 1.0
+
+anthropic:
+  # Used by stage2_metrics.py (chart-image reading) and stage2b_docs.py
+  # (legacy-document LLM fallback + argument coding). Requires
+  # ANTHROPIC_API_KEY in the environment.
+  model: claude-sonnet-5
+
+openalex:
+  base_url: "https://api.openalex.org"

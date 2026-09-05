@@ -1,0 +1,13 @@
+# Venue identity overrides — SPEC.md §7.
+#
+# Only needed for venues with no DBLP link on their detail page, venues with
+# more than one OpenAlex source ID, or deliberate exclusions. Every venue we
+# have so far (SIGCOMM, SenSys, CoNEXT) has a DBLP Source URL and needs no
+# entry here — stage4_join.py uses that URL as the canonical key directly.
+#
+# - key: DSN
+#   core_id: "000"
+#   dblp_key: "conf/dsn"
+#   openalex_source_ids: ["S..."]
+#   exclude_notes: "Excludes DSN-W workshops."
+[]

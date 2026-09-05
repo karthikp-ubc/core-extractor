@@ -1,0 +1,112 @@
+{
+  "source_file": "inputs/sigcomm.html",
+  "core_id": "11",
+  "dblp_source_url": "https://dblp.uni-trier.de/db/conf/sigcomm",
+  "round_blocks": [
+    {
+      "round": "ICORE2026",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n\n                                            (\nh-index\n)\n                                            (\ncitation\n)\n\n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2023",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n                                    \n                                        \n\n                                            (\nh-index\n)\n                                            (\ncitation\n)\n\n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2021",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n                            Rank supported by citations and author strength centiles data\n\n                            \n                                (\nData 1\n)\n                            \n\n                            \n                                \n                                    (\nData 2\n)\n                                \n                            \n\n                            \n\n                            \n                        \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2020",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 4606 - Distributed computing and systems software\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2018",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 0803 - Computer Software†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2017",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 0803 - Computer Software†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2014",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 0803 - Computer Software†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2013",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\nField Of Research: 0803 - Computer Software†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: ERA2010\n\n\nRank: A\n\n\nField Of Research: 0803 - Computer Software†\n\n                                    \n                                        \n                                    \n                                        \n                                    \n\n                                \n\n\n\n\n\n\nSource: "
+    },
+    {
+      "round": "CORE2008",
+      "occurrences": 1,
+      "block_text": "\n\n\nRank: A*\n\n\n\n\n FoR Codes with a \n † \n may be old and no longer in use\n\n\n\n\nComments (1)\n\n            Average User Rating: 5.0\n            \n\n\n\n\n\n\nWelcoming:\n\n\n3.0\n\n\n\n\n\n\nFeedback:\n\n\n4.0\n\n\n\n\n\n\nNetworking:\n\n\n5.0\n\n\n\n\n\n\nInteraction:\n\n\n5.0\n\n\n\n\n\n\nTop people:\n\n\n5.0\n\n\n\n\n\n\nWorthwhile:\n\n\n5.0\n\n\n\n\n\n\n\n\n\n                Sort by: \n\n\nNewest\n\n\nOldest\n\n\nHighest Rating\n\n\nLowest Rating\n\n\n\n\n\n\n\n\n\n\n\n                        Schmidt THOMAS C. wrote:\n                        \n\n                            \n                            Dec. 31, 2020, 9:02 a.m.\n                        \n\n\n\n\n\n\nRating:\n                            \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n                                            This conference is welcoming to new attendees such as postgraduate students:\n                                        \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    }
+  ],
+  "links_found": [
+    {
+      "round": "ICORE2026",
+      "link_type": "h_index",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2025/centiles_graphs/SIGCOMM_11_h_index_FOR4606_centileGraph.png",
+      "anchor_text": "h-index"
+    },
+    {
+      "round": "ICORE2026",
+      "link_type": "citation",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2025/centiles_graphs/SIGCOMM_11_cited_FOR4606_centileGraph.png",
+      "anchor_text": "citation"
+    },
+    {
+      "round": "CORE2023",
+      "link_type": "h_index",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2023/centiles_graphs/SIGCOMM_11_h_index_FOR4606_centileGraph.png",
+      "anchor_text": "h-index"
+    },
+    {
+      "round": "CORE2023",
+      "link_type": "citation",
+      "doc_index": null,
+      "url": "https://portal.core.edu.au/core/media/2023/centiles_graphs/SIGCOMM_11_cited_FOR4606_centileGraph.png",
+      "anchor_text": "citation"
+    },
+    {
+      "round": "CORE2021",
+      "link_type": "data",
+      "doc_index": 1,
+      "url": "https://portal.core.edu.au/core/media/justification/CORE2021/SIGCOMM_11_cited_FOR4606_centileGraph.png",
+      "anchor_text": "Data 1"
+    },
+    {
+      "round": "CORE2021",
+      "link_type": "data",
+      "doc_index": 2,
+      "url": "https://portal.core.edu.au/core/media/justification/CORE2021/SIGCOMM_11_h_index_FOR4606_centileGraph.png",
+      "anchor_text": "Data 2"
+    }
+  ],
+  "unmatched_short_anchors": [
+    {
+      "text": "Sign in with LinkedIn",
+      "href": "/conf-ranks/login"
+    },
+    {
+      "text": "Back to search",
+      "href": "https://portal.core.edu.au/conf-ranks/?search=4606&by=for&source=ICORE2026&sort=atitle&page=1"
+    }
+  ],
+  "issues": [
+    {
+      "issue": "no FoR code found in round block",
+      "round": "CORE2008"
+    }
+  ]
+}
