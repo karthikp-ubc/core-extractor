@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""Which conference detail pages to fetch next, and (optionally) copy-paste
+curl commands for it — same treatment as list_downloads.py, for the same
+reason (see that module's docstring and stage1_core.py's re: robots.txt).
+
+Reads core_rankings.parquet (Stage 1's output — the full FoR cohort) and
+lists the detail_url for every conference at or above a rank threshold
+(default: B, i.e. A*/A/B; excludes C, Australasian B/C, "Unranked", and the
+various National/Regional/Journal-list ranks — none of those are on the
+standard CORE letter scale, see ranks.py's RANK_ORDER) that doesn't already
+have a row in conference_detail.parquet (i.e. hasn't been through
+stage1b_detail.py yet).
+"""
+import argparse
+import shlex
+import sys
+from pathlib import Path
+
+import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from config import load_config  # noqa: E402
+from ranks import rank_key, RANK_ORDER  # noqa: E402
+
+PENDING_COLUMNS = ["core_id", "acronym", "title", "rank", "detail_url",
+                    "target_path", "already_present"]
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rankings-parquet", type=Path, default=None,
+                         help="Default: <data_dir>/core_rankings.parquet")
+    parser.add_argument("--detail-parquet", type=Path, default=None,
+                         help="Default: <data_dir>/conference_detail.parquet "
+                              "— used to detect what's already been "
+                              "collected via stage1b_detail.py.")
+    parser.add_argument("--min-rank", default="B", choices=RANK_ORDER,
+                         help="Lowest standard rank to include (default: "
+                              "B). Anything not on this scale at all "
+                              "(Unranked, national/regional/journal lists) "
+                              "is always excluded.")
+    parser.add_argument("--inputs-dir", type=Path, default=None,
+                         help="Default: <inputs_dir> from config.yaml")
+    parser.add_argument("--out-csv", type=Path, default=None,
+                         help="Default: <data_dir>/pending_detail_pages.csv")
+    parser.add_argument("--emit-curl", action="store_true",
+                         help="Also write download_detail_pages_commands.sh "
+                              "for you to review and run yourself. Not run "
+                              "by this script or anything else here.")
+    parser.add_argument("--config", type=Path, default=None)
+    args = parser.parse_args(argv)
+
+    cfg = load_config(args.config) if args.config else load_config()
+    rankings_path = args.rankings_parquet or (cfg.resolve("data_dir") / "core_rankings.parquet")
+    detail_path = args.detail_parquet or (cfg.resolve("data_dir") / "conference_detail.parquet")
+    inputs_dir = args.inputs_dir or cfg.resolve("inputs_dir")
+    out_csv = args.out_csv or (cfg.resolve("data_dir") / "pending_detail_pages.csv")
+
+    if not rankings_path.exists():
+        print(f"error: {rankings_path} not found — run stage1_core.py first",
+              file=sys.stderr)
+        return 1
+
+    rankings = pd.read_parquet(rankings_path)
+    threshold = rank_key(args.min_rank)
+    qualifying = rankings[rankings["rank"].map(rank_key) <= threshold].copy()
+    excluded_ranks = sorted(set(rankings["rank"]) - set(qualifying["rank"]))
+
+    already_have = set()
+    if detail_path.exists():
+        already_have = set(pd.read_parquet(detail_path)["core_id"].astype(str))
+
+    rows = []
+    for _, r in qualifying.iterrows():
+        core_id = str(r["core_id"])
+        acronym = r["acronym"] or f"core{core_id}"
+        target = inputs_dir / f"{acronym}_{core_id}.html"
+        rows.append({
+            "core_id": core_id, "acronym": acronym, "title": r["title"],
+            "rank": r["rank"], "detail_url": r["detail_url"],
+            "target_path": str(target),
+            "already_present": core_id in already_have,
+        })
+
+    out_df = pd.DataFrame(rows, columns=PENDING_COLUMNS)
+    out_df.to_csv(out_csv, index=False)
+
+    pending = out_df[~out_df["already_present"]]
+    print(f"{len(qualifying)}/{len(rankings)} conferences at or above rank "
+          f"{args.min_rank!r}. Ranks excluded entirely: {excluded_ranks}",
+          file=sys.stderr)
+    print(f"{len(pending)} of those don't have a detail page collected yet "
+          f"({len(qualifying) - len(pending)} already done).\n",
+          file=sys.stderr)
+    for _, r in pending.iterrows():
+        print(f"[{r['rank']:>2s}] {r['acronym']:<12s} {r['detail_url']}",
+              file=sys.stderr)
+    print(f"\nfull list written to {out_csv}", file=sys.stderr)
+
+    if args.emit_curl:
+        commands_path = out_csv.parent / "download_detail_pages_commands.sh"
+        lines = [
+            "#!/bin/sh",
+            "# Generated by list_detail_pages.py — NOT run automatically by",
+            "# anything in this project. Review before running any of it.",
+            "# portal.core.edu.au's robots.txt disallows AI-agent",
+            "# user-agents site-wide; these commands exist for YOU to run",
+            "# from your own terminal, not to be invoked by a script or",
+            "# agent on your behalf.",
+            "#",
+            "# UNVERIFIED: unlike the static image/PDF links, it's not",
+            "# confirmed these detail pages render full content without an",
+            "# authenticated session (the search page does show a 'Sign in",
+            "# with LinkedIn' link). Check the first downloaded file's size",
+            "# and content actually match a real detail page — like",
+            "# conext.html/sensys.html/sigcomm.html already in inputs/ —",
+            "# before running the rest of the batch.",
+            "set -e",
+            f"mkdir -p {shlex.quote(str(inputs_dir))}",
+        ]
+        for _, r in pending.iterrows():
+            lines.append(
+                f"curl -sS --fail -L -o {shlex.quote(r['target_path'])} "
+                f"{shlex.quote(r['detail_url'])} && sleep 1")
+        commands_path.write_text("\n".join(lines) + "\n")
+        print(f"\n{len(pending)} curl command(s) written to {commands_path} "
+              f"— open it, review it, and run it yourself if you're "
+              f"satisfied with it.", file=sys.stderr)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

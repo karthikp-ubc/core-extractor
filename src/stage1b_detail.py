@@ -340,20 +340,32 @@ def main(argv=None):
 
     if args.append and detail_parquet.exists():
         existing = pd.read_parquet(detail_parquet)
-        detail_df = pd.concat([existing, detail_df], ignore_index=True) \
-            .drop_duplicates(subset=["core_id", "round"], keep="last")
+        detail_df = pd.concat([existing, detail_df], ignore_index=True)
+        detail_df["core_id"] = detail_df["core_id"].astype(str)  # see links_df below
+        detail_df = detail_df.drop_duplicates(subset=["core_id", "round"], keep="last")
     if args.append and links_csv.exists():
         existing_links = pd.read_csv(links_csv)
         links_df = pd.concat([existing_links, links_df], ignore_index=True)
-        # doc_index is Python None for freshly-parsed non-"data" links but
-        # becomes float NaN once round-tripped through CSV; concatenating
-        # the two leaves an object-dtype column where drop_duplicates no
-        # longer treats None and NaN as equal, silently defeating the dedup
-        # below. Normalize to a single missing-value representation first.
+        # Two independent type-mismatch traps here, both silently defeating
+        # the dedup below if left alone:
+        # 1. doc_index is Python None for freshly-parsed non-"data" links
+        #    but becomes float NaN once round-tripped through CSV; mixed
+        #    into an object column, drop_duplicates no longer treats None
+        #    and NaN as equal.
+        # 2. core_id is always a str from the freshly-parsed side (regex
+        #    capture in guess_core_id), but CSV round-trips numeric-looking
+        #    strings back as int64 — "11" != 11 as Python values, so the
+        #    same conference's old and new rows look like different keys.
         links_df["doc_index"] = pd.to_numeric(links_df["doc_index"],
                                                errors="coerce")
+        links_df["core_id"] = links_df["core_id"].astype(str)
+        # A conference cross-listed under multiple FoR codes gets a
+        # separate h_index/citation chart PER FoR code (same core_id/round/
+        # link_type/doc_index, genuinely different url) — e.g. ISCA has
+        # distinct CSE/4606/4612 charts each round. Deduping without `url`
+        # would treat those as the same link and silently drop real ones.
         links_df = links_df.drop_duplicates(
-            subset=["core_id", "round", "link_type", "doc_index"],
+            subset=["core_id", "round", "link_type", "doc_index", "url"],
             keep="last")
 
     detail_df.to_parquet(detail_parquet, index=False)

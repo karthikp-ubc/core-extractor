@@ -12,9 +12,13 @@ source for venues that never submitted a Data document.
 
 This script does not fetch the images itself — same reasoning as
 stage1_core.py/stage1b_detail.py re: robots.txt. You place the downloaded
-PNGs (keep their original filenames — those filenames are already the join
-key back to links.csv) into --images-dir (default: images/). Files not
-found there are logged to unmatched.csv, not guessed at.
+PNGs into --images-dir (default: images/), under a subfolder per round:
+images/{round}/{basename}. The subfolder matters — the 2026- and
+2023-round URLs for the same venue/link_type share an identical filename
+(they differ only in their parent year folder on the source site), so
+bare-basename matching would silently collide the two. See
+list_downloads.py for the exact per-file source URL and target path. Files
+not found there are logged to unmatched.csv, not guessed at.
 
 Extraction method: the "centileGraph" filename plus the fact these are the
 same percentile-by-rank-tier chart used elsewhere on ICORE's own site
@@ -100,7 +104,11 @@ def process_row(row, image_path, cache_dir, model):
     except Exception as exc:  # noqa: BLE001 — surfaced into unmatched.csv, not swallowed
         return [], f"vision extraction failed: {exc}"
 
-    cache_copy = cache_dir / image_path.name
+    # Same collision as the source images_dir layout (see caller): namespace
+    # by round so the 2026/2023 versions of an identically-named chart don't
+    # overwrite each other in cache/ either.
+    cache_copy = cache_dir / row["round"] / image_path.name
+    cache_copy.parent.mkdir(parents=True, exist_ok=True)
     if not cache_copy.exists():
         cache_copy.write_bytes(image_path.read_bytes())
 
@@ -168,15 +176,21 @@ def main(argv=None):
 
     metric_rows, unmatched_rows = [], []
     for _, row in in_scope.iterrows():
+        # The 2026- and 2023-round chart URLs for the same venue/link_type
+        # differ only in their parent year folder (.../2025/... vs
+        # .../2023/...) — the filename itself is identical between rounds.
+        # Matching on bare basename would silently collide the two, so the
+        # local path is namespaced by round.
         basename = row["url"].rsplit("/", 1)[-1]
-        image_path = images_dir / basename
+        image_path = images_dir / row["round"] / basename
         if not image_path.exists():
             unmatched_rows.append({
                 "core_id": row["core_id"], "round": row["round"],
                 "link_type": row["link_type"], "url": row["url"],
                 "reason": f"image not found locally at {image_path} — "
                           f"download it yourself and place it there "
-                          f"(filename must match the URL's basename)",
+                          f"(path is images/<round>/<basename>; see "
+                          f"list_downloads.py for the exact list)",
             })
             continue
         recs, err = process_row(row, image_path, cache_dir, cfg.anthropic.model)
