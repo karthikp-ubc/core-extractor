@@ -57,8 +57,14 @@ Stage 2   stage2_metrics.py   chart images (local)   -> icore_metrics.parquet
 Stage 2b  stage2b_docs.py     Data/Decision PDFs (local) -> extracted.parquet, documents.csv, argument_matrix.csv
 Stage 3   stage3_verify.py    OpenAlex cross-check (network, optional) -> metric_discrepancies.csv
 Stage 4   stage4_join.py      join everything          -> analysis.parquet
-          export_combined.py  flatten into one CSV      -> combined_export.csv
+          export_combined.py  flatten into one CSV      -> combined_export.csv (+ combined_export_<round>.csv)
 ```
+
+Beyond the pipeline itself, `src/plot_dsn_case.py` is a one-off analysis
+script (not a pipeline stage — nothing else depends on it) that reads
+`combined_export*.csv` and renders comparison/trend figures for a specific
+report; see **Analysis scripts** below for the pattern if you want to
+build a similar one for another venue.
 
 `run_all.py` runs Stages 1/1b/2/2b/3/4 in order against whatever local
 inputs already exist, skipping (loudly) any stage whose inputs aren't
@@ -136,7 +142,19 @@ python3 src/export_combined.py --round CORE2023   # -> data/combined_export_CORE
 ```
 `combined_export.csv` is the single flat file to actually work with — one
 row per (conference, round), rank/identity + chart metrics + document
-fields (blank as `-` where nothing was gathered) in one place.
+fields in one place. `--round` filters to one round and writes to a
+separate, auto-named file (never overwrites the all-rounds export); an
+unknown round name fails with the list of actual available rounds instead
+of silently writing an empty file.
+
+Missing values render as the literal string `-`, not an empty cell — a
+deliberate choice (see Known issues below) so "no data gathered" reads
+unambiguously when scanning the file by eye. **If you write your own
+script against `combined_export*.csv`**, pass `na_values=["-"]` to
+`pd.read_csv` — otherwise any numeric column that has even one missing
+value comes back as `dtype=object` (strings) and arithmetic on it breaks
+with a confusing `TypeError`, not a `NaN`. `plot_dsn_case.py` does this;
+copy that pattern.
 
 **Verification workflow.** `data/verify_worklist.csv` lists every
 LLM-derived field (`confidence != "high"`) plus a 10% sample of
@@ -147,6 +165,28 @@ python3 src/stage2b_docs.py --apply-verification
 ```
 overwrites the corresponding `extracted/*.json` fields with
 `method="manual"`, `confidence="high"`.
+
+## Analysis scripts
+
+Not every question needs a new pipeline stage — some are a one-off script
+against the already-joined `combined_export*.csv`. `src/plot_dsn_case.py`
+is the example of this pattern: it builds the two comparison/trend figures
+used in a report making the quantitative case for reclassifying DSN
+(core_id 787) from A to A*, reading only the exported CSVs (no PDFs/images
+touched directly).
+
+```bash
+python3 src/plot_dsn_case.py       # -> data/dsn_case_peer_comparison.png, data/dsn_case_trend.png
+```
+(`matplotlib` is in `requirements.txt` for this script's sake — it's the
+only thing in the repo that uses it; the pipeline itself doesn't.)
+
+The finished report itself — `data/dsn_astar_brief.html`, published as a
+Claude Artifact — embeds both figures as base64 and cites every claim back
+to a specific `extracted/*.json` field or `combined_export*.csv` column.
+If you build a similar script for another venue: keep it out of `run_all.py`
+(it's not part of the reproducible pipeline, it's a report), and remember
+the `na_values=["-"]` gotcha above.
 
 ## Testing
 
@@ -160,6 +200,15 @@ schema, and pure unit tests for h-index, rank ordering, and alias
 validation.
 
 ## Known issues and caveats
+
+**`combined_export*.csv`'s missing-value marker (`-`) breaks naive numeric
+reads.** It's rendered that way deliberately (an empty cell reads as
+ambiguous — did this field just have no data, or did a row get
+misaligned? — a literal `-` doesn't). But `pd.read_csv` without
+`na_values=["-"]` leaves any column that has one turn to `dtype=object`,
+so arithmetic on it raises `TypeError`, not a clean `NaN`-aware result.
+Hit this directly building `plot_dsn_case.py`; every consumer of these
+files needs the same `na_values=["-"]` argument.
 
 **Coverage is inherently partial, by ICORE's own process, not a bug.**
 Most conferences aren't reviewed every round — only ones up for a rank
