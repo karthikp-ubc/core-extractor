@@ -15,3 +15,7 @@ anthropic
 
 # Test suite (SPEC.md §9).
 pytest
+
+# One-off analysis scripts (e.g. plot_dsn_case.py) that render static
+# figures for a report, outside the main pipeline.
+matplotlib
