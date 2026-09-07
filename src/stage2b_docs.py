@@ -20,8 +20,12 @@ regex-only prototype:
 2. Argument coding (SPEC.md §6.4 rule 1): classifies the three free-text
    fields into the claim_type taxonomy, same verbatim-quote guard.
 
-Neither has been run against a real legacy or Decision document — there
-isn't one in this repo yet. Every LLM-derived field is marked
+Both LLM calls disable extended thinking explicitly (2026-09-07 finding,
+same as stage2_metrics.py: an account/workspace default here, not
+something these calls opted into — on longer prompts it consumed the
+entire max_tokens budget, truncating the JSON mid-response and failing
+silently, since json.JSONDecodeError was being swallowed with no field
+filled and no warning printed). Every LLM-derived field is marked
 method="llm" with the model's own confidence, never upgraded to "high".
 """
 import argparse
@@ -34,7 +38,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from config import load_config  # noqa: E402
@@ -43,6 +47,10 @@ import extract_icore as ei  # noqa: E402
 DOCUMENTS_COLUMNS = ["core_id", "acronym", "round", "link_type", "doc_index",
                       "doc_url", "local_path", "sha256", "bytes",
                       "content_type", "fetched_at", "needs_ocr"]
+
+# Model wraps JSON in ```json fences on a meaningful fraction of real
+# responses despite being told not to — same fix as stage2_metrics.py.
+_FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.M)
 UNMATCHED_COLUMNS = ["core_id", "round", "link_type", "url", "reason"]
 WORKLIST_COLUMNS = ["doc_path", "page", "field", "extracted_value", "snippet",
                      "verified_value", "verified_by", "notes"]
@@ -86,6 +94,17 @@ def paged_text(pages: list[str]) -> str:
     return "\n".join(f"--- PAGE {i} ---\n{p}" for i, p in enumerate(pages, 1))
 
 
+def _matches_schema_type(field: str, value) -> bool:
+    """True if `value` validates against DocumentExtraction's declared
+    type for `field` (e.g. rejects a dict where a list[int] is expected)."""
+    annotation = ei.DocumentExtraction.model_fields[field].annotation
+    try:
+        TypeAdapter(annotation).validate_python(value)
+        return True
+    except Exception:  # noqa: BLE001 — any validation failure means reject
+        return False
+
+
 def llm_fill_missing(pages, missing_fields, model):
     """Legacy-document fallback. Returns {field: {value, page, snippet,
     confidence}} for fields the model could support with a verbatim quote;
@@ -110,6 +129,12 @@ sentence or line the value came from (copy-paste exact, do not paraphrase) \
 so it can be checked against the source. If a field isn't stated, omit it \
 entirely — do not include it with a null or guessed value.
 
+submissions_by_year, acceptance_rates_pct, and chair_hindex_by_year are \
+each a plain ordered list of numbers, most recent year first — e.g. \
+submissions_by_year: [176, 166, 175], NOT an object keyed by year like \
+{{"2022": 176, "2021": 166}}. area_leaders is a list of {{"name": ..., \
+"gs_hindex": <int>}} objects, not a list of plain name strings.
+
 Return a JSON array, each entry:
 {{"field": "<name>", "value": <string, number, or object matching the \
 field's expected type>, "page": <int>, "snippet": "<verbatim quote, \
@@ -121,12 +146,15 @@ DOCUMENT TEXT:
 {paged_text(pages)}
 """
     resp = client.messages.create(
-        model=model, max_tokens=2000,
+        model=model, max_tokens=4000, thinking={"type": "disabled"},
         messages=[{"role": "user", "content": prompt}])
     text = "".join(b.text for b in resp.content if b.type == "text").strip()
+    text = _FENCE_RE.sub("", text).strip()
     try:
         entries = json.loads(text)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as exc:
+        print(f"warning: legacy-fallback JSON parse failed for a document "
+              f"({exc}); no fields filled from this call", file=sys.stderr)
         return {}
 
     accepted = {}
@@ -140,8 +168,20 @@ DOCUMENT TEXT:
             continue
         if snippet not in pages[page - 1]:
             continue  # guard: quote must be verbatim in the claimed page
+        value = entry.get("value")
+        if not _matches_schema_type(field, value):
+            # Found in practice: the model sometimes returns e.g. a dict
+            # for a list[int] field, or a sentence for an int field. One
+            # such field would otherwise fail DocumentExtraction's pydantic
+            # validation and discard the ENTIRE document — including every
+            # other correctly-typed field this same call filled. Drop just
+            # this field instead.
+            print(f"warning: legacy-fallback returned {field!r}={value!r}, "
+                  f"which doesn't match its schema type — dropped, not "
+                  f"guessed at", file=sys.stderr)
+            continue
         accepted[field] = {
-            "value": entry.get("value"),
+            "value": value,
             "page": page, "snippet": snippet[:200],
             "confidence": entry.get("confidence") if entry.get("confidence") in
             ("medium", "low") else "low",
@@ -176,12 +216,16 @@ TEXT:
 {text}
 """
     resp = client.messages.create(
-        model=model, max_tokens=1000,
+        model=model, max_tokens=2000, thinking={"type": "disabled"},
         messages=[{"role": "user", "content": prompt}])
     raw = "".join(b.text for b in resp.content if b.type == "text").strip()
+    raw = _FENCE_RE.sub("", raw).strip()
     try:
         entries = json.loads(raw)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as exc:
+        print(f"warning: argument-coding JSON parse failed for "
+              f"{field_name!r} ({exc}); no arguments coded from this call",
+              file=sys.stderr)
         return []
 
     accepted = []
@@ -378,7 +422,11 @@ def main(argv=None):
         if result["extra_fields"]:
             payload["extra_fields"] = result["extra_fields"]
 
-        out_path = extracted_dir / f"{core_id}_{round_label}_{doc_index}.json"
+        # link_type must be in the filename: a data doc and a decision doc
+        # for the same core_id/round both default to doc_index=1 and would
+        # otherwise silently overwrite each other (found: half of every
+        # real batch run's per-document JSONs were lost this way).
+        out_path = extracted_dir / f"{core_id}_{round_label}_{link_type}_{doc_index}.json"
         out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
         payloads.append(payload)
         doc_paths.append(str(out_path))
@@ -412,6 +460,10 @@ def main(argv=None):
     unmatched_df = pd.DataFrame(unmatched_rows, columns=UNMATCHED_COLUMNS)
     if unmatched_path.exists():
         existing = pd.read_csv(unmatched_path)
+        # This stage only ever contributes data/decision rows — drop ALL of
+        # its own prior entries first (see stage2_metrics.py's identical
+        # fix) so a rerun reflects current reality, not stale history.
+        existing = existing[~existing["link_type"].isin(["data", "decision"])]
         unmatched_df = pd.concat([existing, unmatched_df], ignore_index=True)
     unmatched_df.to_csv(unmatched_path, index=False)
 

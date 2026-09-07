@@ -388,13 +388,21 @@ def extract(pdf_path, core_id=None, round_=None, link_type=None, doc_url=None):
     e.pattern("other_relevant_info",
               r"Other relevant information:\s*(.+?)(?=Attachments)")
 
-    # --- decision documents (UNVERIFIED: no real Decision PDF inspected) ---
+    # --- decision documents ---
+    # CONFIRMED against real 2026-round Decision PDFs (2026-09-07): "Decision"
+    # is a standalone heading, the actual verdict is the line right after it
+    # (e.g. "Conference to be ranked/tagged as B"), then a blank line and a
+    # "Justification" heading. The original guess here ("Decision: X" on one
+    # line) never matched anything real. Older rounds (e.g. CORE2023) don't
+    # reliably use this heading at all — that's expected, SPEC.md §6.4 rule 2
+    # routes those through the legacy LLM fallback instead.
     if link_type == "decision":
-        print("warning: Decision-document layout has not been verified "
-              "against a real sample; outcome fields are best-effort",
-              file=sys.stderr)
-        e.pattern("outcome_verbatim", r"^Decision\s*:\s*(.+?)\s*$",
-                  confidence="low")
+        e.pattern("outcome_verbatim", r"^Decision\s*\n([^\n]+)")
+        verbatim = e.fields.get("outcome_verbatim")
+        if verbatim:
+            m = re.search(r"\bas\s+(A\*|Australasian B|A|B|C)\b", verbatim)
+            if m:
+                e._record("outcome", m.group(1), verbatim, "regex")
 
     fields = dict(e.fields)
     fields["core_id"] = core_id
@@ -480,7 +488,13 @@ def main(argv=None):
 
     if args.core_id and args.round_:
         args.out_dir.mkdir(parents=True, exist_ok=True)
-        out_path = args.out_dir / f"{args.core_id}_{args.round_}_{args.doc_index}.json"
+        # link_type in the filename: a data doc and a decision doc for the
+        # same core_id/round both default to doc_index=1 and would
+        # otherwise collide (see stage2b_docs.py's batch driver for the
+        # same fix — this standalone CLI path had the identical bug).
+        link_type_part = args.link_type or "doc"
+        out_path = args.out_dir / \
+            f"{args.core_id}_{args.round_}_{link_type_part}_{args.doc_index}.json"
         out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False))
         print(f"wrote {out_path}", file=sys.stderr)
     else:
