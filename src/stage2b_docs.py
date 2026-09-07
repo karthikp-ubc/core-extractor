@@ -377,12 +377,31 @@ def main(argv=None):
 
         content_type = sniff_content_type(local_path)
         if content_type != "application/pdf":
+            # Confirmed (2026-09): every real case of this is the site
+            # linking the SAME url already captured as this venue's own
+            # h_index/citation chart into the Data/Decision slot too — not
+            # a broken download. No new information behind it; Stage 2
+            # already extracted this exact image. Only word it as a
+            # possible download failure when the url genuinely isn't one
+            # we already have elsewhere.
+            duplicate_of = links[
+                (links["url"] == row["url"])
+                & (links["link_type"].isin(["h_index", "citation"]))
+            ]
+            if not duplicate_of.empty:
+                reason = (f"this {link_type} link points to the exact same "
+                          f"url as this venue's own "
+                          f"{duplicate_of.iloc[0]['link_type']} chart for "
+                          f"{round_label} — already extracted via Stage 2 "
+                          f"(icore_metrics.parquet), nothing new to parse "
+                          f"here")
+            else:
+                reason = (f"{local_path} is not a PDF (sniffed "
+                          f"{content_type}) — link may have 404'd or "
+                          f"returned an HTML error page when saved")
             unmatched_rows.append({
                 "core_id": core_id, "round": round_label,
-                "link_type": link_type, "url": row["url"],
-                "reason": f"{local_path} is not a PDF (sniffed "
-                          f"{content_type}) — link may have 404'd or "
-                          f"returned an HTML error page when saved",
+                "link_type": link_type, "url": row["url"], "reason": reason,
             })
             continue
 
