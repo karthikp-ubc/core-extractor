@@ -128,7 +128,12 @@ def main(argv=None):
           f"document, out of {len(analysis)} in scope", file=sys.stderr)
 
     out_csv.parent.mkdir(parents=True, exist_ok=True)
-    combined.to_csv(out_csv, index=False)
+    # na_rep, not a DataFrame mutation — missing stays NaN in memory (so any
+    # future .isna() checks against this data keep working), only the CSV
+    # text rendering changes. Makes "field has no data" visually
+    # unambiguous instead of an empty cell that looks like it might be a
+    # row-alignment mistake.
+    combined.to_csv(out_csv, index=False, na_rep="-")
     print(f"wrote {len(combined)} row(s) x {len(combined.columns)} column(s) "
           f"to {out_csv}", file=sys.stderr)
     return 0
