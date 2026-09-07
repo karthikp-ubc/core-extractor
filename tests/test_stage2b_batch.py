@@ -95,3 +95,35 @@ def test_non_pdf_file_logged_not_crashed(tmp_path):
     assert rc == 0
     unmatched = pd.read_csv(out_dir / "unmatched.csv")
     assert any("not a PDF" in r for r in unmatched["reason"])
+
+
+def test_data_link_duplicating_a_chart_url_gets_accurate_reason(tmp_path):
+    # Real, confirmed case (SIGCOMM/CORE2021 and 6 other venues): a "data"
+    # link sometimes points to the exact same url as this venue's own
+    # h_index/citation chart — not a broken download, nothing new to parse.
+    links_csv, rankings_parquet, pdfs_dir, out_dir = make_repo(tmp_path)
+    chart_url = "https://portal.core.edu.au/core/media/x/FICT_h_index.png"
+    existing = pd.read_csv(links_csv)
+    existing = pd.concat([existing, pd.DataFrame([
+        {"core_id": "TEST", "round": "ICORE2026", "link_type": "h_index",
+         "doc_index": None, "url": chart_url},
+    ])], ignore_index=True)
+    existing.loc[existing["link_type"] == "data", "url"] = chart_url
+    existing.to_csv(links_csv, index=False)
+
+    bad_path = pdfs_dir / "FICT" / "ICORE2026_data_1.pdf"
+    bad_path.write_bytes(b"\x89PNG\r\n\x1a\nfake png bytes")
+
+    rc = stage2b_docs.main([
+        "--links-csv", str(links_csv),
+        "--rankings-parquet", str(rankings_parquet),
+        "--pdfs-dir", str(pdfs_dir),
+        "--out-dir", str(out_dir),
+        "--extracted-dir", str(out_dir / "extracted"),
+        "--no-llm",
+    ])
+    assert rc == 0
+    unmatched = pd.read_csv(out_dir / "unmatched.csv")
+    row = unmatched[unmatched["url"] == chart_url].iloc[0]
+    assert "already extracted via Stage 2" in row["reason"]
+    assert "not a PDF" not in row["reason"]
