@@ -51,39 +51,61 @@ UNMATCHED_COLUMNS = ["core_id", "round", "link_type", "url", "reason"]
 LABELS_COLUMNS = ["core_id", "round", "link_type", "rank_of_venue",
                     "most_recent_ranking"]
 
-# CONFIRMED against real downloaded charts (2026-09-07): a grouped bar
-# chart, x-axis = 4 percentile bands (5/10/25/50), y-axis = "Percentage of
-# papers in Band". Each band has up to 4 bars: the venue itself, "Top Confs
-# (A*/A)" (A* and A COMBINED — the chart does not break these out
-# separately, unlike the Stage 2b PDF caption sentence), "B Ranks", "C
-# Ranks". Side text gives "Papers in venue: N", "Rank of venue: X", "Most
-# recent ranking: ROUND"; the title gives the window years; a footer line
-# names the data source. Same layout for h_index and citation charts (only
-# "h index"/"cited" differs in the title).
+# CONFIRMED against real downloaded charts (2026-09-07), REVISED same day
+# after finding a second template: a grouped bar chart, x-axis = 4
+# percentile bands (5/10/25/50), y-axis = "Percentage of papers in Band".
+# The venue always gets its own bar. The comparison groups vary by
+# template — confirmed BOTH of these exist in the real image set:
+#   (a) 3 comparison bars: "Top Confs (A*/A)" (A* and A COMBINED into one
+#       series), "B Ranks", "C Ranks" — e.g. CC/AINA-style charts.
+#   (b) 4 comparison bars: "A* Ranks", "A Ranks" SEPARATELY, "B Ranks", "C
+#       Ranks" — e.g. ASPLOS-style charts.
+# The first version of this prompt only had slots for template (a). Fed a
+# template (b) image, the model still returned exactly 4 values per band
+# but shifted into the wrong slots (the "A Ranks" bar's value landed in
+# "b_ranks", "B Ranks" landed in "c_ranks", "C Ranks" was dropped
+# entirely) — silently WRONG data, not just missing data. Every field
+# below is now named for its own specific legend entry so there is no slot
+# to misalign into; a chart using template (a) simply leaves the
+# template-(b)-only fields null, and vice versa. Side-text labels also
+# vary ("Papers in venue: N" vs "#papers published: N"; "Rank of venue: X"
+# vs "Rank: X") — both are covered. Same layout family for h_index and
+# citation charts (only "h index"/"cited" differs in the title).
 VISION_PROMPT = """\
 This is a grouped bar chart from the ICORE conference-ranking portal. The \
-x-axis has 4 percentile bands: 5, 10, 25, 50. For each band there are up to \
-4 bars (see the legend): the venue itself (its own colour, named in the \
-legend after "Papers in"), "Top Confs (A*/A)" (A* and A combined into one \
-series — do not try to split them), "B Ranks", and "C Ranks". Read the \
-approximate height of each bar against the y-axis gridlines (round to the \
-nearest labelled gridline value). Also read the side text and title.
+x-axis has 4 percentile bands: 5, 10, 25, 50. Read the actual legend on \
+THIS image carefully — there are two known template variants and you must \
+report whichever one this image actually uses, leaving the other variant's \
+fields null:
 
-Return strict JSON with this exact shape, using null for any bar/field not \
-actually visible (a missing bar in a band is null, not 0):
+Variant A: legend has "Top Confs (A*/A)" as ONE combined bar (plus the \
+venue, "B Ranks", "C Ranks").
+Variant B: legend has "A* Ranks" and "A Ranks" as TWO SEPARATE bars (plus \
+the venue, "B Ranks", "C Ranks").
+
+Do not guess which variant applies — read the legend text on this specific \
+image. Read the approximate height of each bar against the y-axis \
+gridlines (round to the nearest labelled value, or use a printed data \
+label above the bar if present). A bar absent from a band is null, not 0.
+
+Also read the side text (labelled "Papers in venue"/"#papers published", \
+and "Rank of venue"/"Rank", and "Most recent ranking" if present) and the \
+title (window years).
+
+Return strict JSON with this exact shape:
 {
   "bands": {
-    "5":  {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>},
-    "10": {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>},
-    "25": {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>},
-    "50": {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>}
+    "5":  {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "a_star_ranks": <int|null>, "a_ranks": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>},
+    "10": {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "a_star_ranks": <int|null>, "a_ranks": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>},
+    "25": {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "a_star_ranks": <int|null>, "a_ranks": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>},
+    "50": {"venue": <int|null>, "topconfs_A_star_A": <int|null>, "a_star_ranks": <int|null>, "a_ranks": <int|null>, "b_ranks": <int|null>, "c_ranks": <int|null>}
   },
-  "papers_in_venue": <int|null, from the "Papers in venue: N" side text>,
-  "rank_of_venue": <string|null, e.g. "B", from the side text>,
-  "most_recent_ranking": <string|null, e.g. "CORE2021", from the side text>,
+  "papers_in_venue": <int|null>,
+  "rank_of_venue": <string|null, e.g. "B">,
+  "most_recent_ranking": <string|null, e.g. "CORE2021", only if that exact label is present>,
   "window_years": [<int>, ...] or null,
   "confidence": "high" | "medium" | "low",
-  "notes": "<one brief sentence on chart quality / anything unclear>"
+  "notes": "<one brief sentence: which variant (A or B), and chart quality>"
 }
 Respond with ONLY the JSON object — no markdown code fence, no other text.
 """
@@ -127,7 +149,13 @@ def metric_prefix(link_type: str) -> str:
     return {"h_index": "author_strength", "citation": "citation"}[link_type]
 
 
+# json_key -> metric_name suffix. topconfs_A_star_A (variant A) and
+# a_star_ranks/a_ranks (variant B) are mutually exclusive per image — see
+# VISION_PROMPT above — but both are always offered so whichever the model
+# actually finds on this image lands in its own named field, never a slot
+# shared with something else.
 BAND_SERIES = [("venue", "venue"), ("topconfs_A_star_A", "topconfs"),
+               ("a_star_ranks", "A_star"), ("a_ranks", "A"),
                ("b_ranks", "B"), ("c_ranks", "C")]
 
 
