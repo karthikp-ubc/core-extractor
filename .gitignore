@@ -1,0 +1,16 @@
+# Manually-collected inputs from the CORE portal (SPEC.md — this project
+# never fetches them itself; they're the user's own downloads).
+inputs/
+images/
+pdfs/
+
+# Everything the pipeline generates from those inputs.
+data/
+extracted/
+cache/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
