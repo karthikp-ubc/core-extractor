@@ -322,13 +322,12 @@ def main(argv=None):
     previous_metrics, previous_labels = {}, {}
     if args.reuse_existing and (out_dir / "icore_metrics.parquet").exists():
         prev = pd.read_parquet(out_dir / "icore_metrics.parquet")
-        prev["core_id"] = prev["core_id"].astype(str)
         previous_metrics = {k: g.to_dict("records")
                             for k, g in prev.groupby("raw_payload_ref")}
         labels_csv = out_dir / "icore_metrics_labels.csv"
         if labels_csv.exists():
-            pl = pd.read_csv(labels_csv, dtype=str)
-            previous_labels = {(r["core_id"], r["round"], r["link_type"]): r
+            pl = pd.read_csv(labels_csv)
+            previous_labels = {(str(r["core_id"]), r["round"], r["link_type"]): r
                                for r in pl.to_dict("records")}
     n_reused = 0
 
@@ -373,6 +372,10 @@ def main(argv=None):
     metrics_path = out_dir / "icore_metrics.parquet"
     metrics_df = pd.DataFrame(metric_rows, columns=METRICS_COLUMNS)
     metrics_df["value"] = pd.to_numeric(metrics_df["value"])
+    # Reused rows (from the previous parquet) and fresh rows (from
+    # links.csv) must share one core_id type or to_parquet() refuses the
+    # column outright — and this write is the only place results are saved.
+    metrics_df["core_id"] = pd.to_numeric(metrics_df["core_id"]).astype("int64")
     metrics_df.to_parquet(metrics_path, index=False)
     print(f"wrote {len(metrics_df)} metric row(s) to {metrics_path}",
           file=sys.stderr)

@@ -188,6 +188,35 @@ If you build a similar script for another venue: keep it out of `run_all.py`
 (it's not part of the reproducible pipeline, it's a report), and remember
 the `na_values=["-"]` gotcha above.
 
+### CCF-A comparison (cross-FoR cohort)
+
+`src/list_ccf.py` selects venues from a CCF ranking list
+(`CCF_Ranking_2026.json`, `--rank A` by default) instead of one FoR. It
+matches each to a CORE `core_id` by DBLP link — against collected detail
+pages, then against saved CORE search pages in `inputs/ccf_search/` —
+and writes the URLs still to fetch (`data/ccf_A_urls.txt`, `--emit-curl`
+for a script), a Stage 1 input with just the matched venues
+(`inputs/ccf_A_master.csv`), and `data/chart_for_code.csv`, the one FoR
+chart Stage 2 reads per venue (4606 for the original cohort, CORE's
+primary FoR otherwise; charts are per-FoR percentiles and
+`icore_metrics` has no FoR column, so two FoRs' charts would collide).
+
+```bash
+python3 src/list_ccf.py --emit-curl            # repeat after each batch of saved pages
+python3 src/stage1_core.py inputs/ccf_A_master.csv --round ICORE2026 --append
+python3 src/stage1b_detail.py inputs/*.html --append
+python3 src/list_downloads.py --emit-curl      # no --for-code: venues span many FoRs
+python3 src/stage2_metrics.py --reuse-existing # only new charts go to the API
+python3 src/stage2b_docs.py --reuse-existing   # only new PDFs go to the LLM
+python3 src/stage4_join.py && python3 src/export_combined.py --round ICORE2026
+python3 src/plot_ccf_a.py   # -> data/ccf_a_core_gap.png, ccf_a_rank_crosswalk.png, ccf_a_comparison.csv
+```
+
+`plot_ccf_a.py` compares venues across fields as their gap to *their own
+field's* A* average in the top-25% band (raw percentages aren't comparable
+across FoRs), and excludes any metric read from a chart outside the venue's
+mapped FoR.
+
 ## Testing
 
 ```bash
