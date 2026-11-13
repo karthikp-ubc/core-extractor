@@ -323,6 +323,12 @@ def main(argv=None):
     parser.add_argument("--no-llm", action="store_true",
                          help="Skip legacy-document fallback and argument "
                               "coding; regex pass only.")
+    parser.add_argument("--reuse-existing", action="store_true",
+                         help="For a document whose extracted/<core_id>_"
+                              "<round>_<link_type>_<n>.json already exists, "
+                              "load it instead of re-extracting — avoids "
+                              "re-running the LLM (and churning already-"
+                              "cited values) when only new venues were added.")
     parser.add_argument("--config", type=Path, default=None)
     args = parser.parse_args(argv)
 
@@ -356,6 +362,7 @@ def main(argv=None):
 
     doc_rows, unmatched_rows = [], []
     payloads, doc_paths, argument_matrix_rows = [], [], []
+    n_reused = 0
     decisions_by_core_round = {}  # for joining outcome into argument_matrix
 
     for _, row in in_scope.iterrows():
@@ -415,6 +422,22 @@ def main(argv=None):
             "needs_ocr": False,
         })
 
+        out_path = extracted_dir / f"{core_id}_{round_label}_{link_type}_{doc_index}.json"
+        if args.reuse_existing and out_path.exists():
+            payload = json.loads(out_path.read_text())
+            payloads.append(payload)
+            doc_paths.append(str(out_path))
+            n_reused += 1
+            if link_type == "decision":
+                decisions_by_core_round[(core_id, round_label)] = \
+                    payload.get("outcome") or payload.get("outcome_verbatim")
+            for arg in payload.get("arguments") or []:
+                argument_matrix_rows.append({
+                    "core_id": core_id, "acronym": acronym, "round": round_label,
+                    "claim_type": arg["claim_type"], "outcome": None,
+                })
+            continue
+
         result, doc_or_err, arguments = process_document(
             local_path, core_id, acronym, round_label, link_type, row["url"],
             doc_index, cfg.anthropic.model, use_llm=not args.no_llm)
@@ -461,6 +484,9 @@ def main(argv=None):
 
     for r in argument_matrix_rows:
         r["outcome"] = decisions_by_core_round.get((r["core_id"], r["round"]))
+    if args.reuse_existing:
+        print(f"reused {n_reused} existing extraction(s) from {extracted_dir}",
+              file=sys.stderr)
 
     out_dir.mkdir(parents=True, exist_ok=True)
 

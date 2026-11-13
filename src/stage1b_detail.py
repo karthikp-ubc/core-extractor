@@ -32,9 +32,14 @@ ROUND_RE = re.compile(r"\b((?:ICORE|CORE)\s?20\d{2})\b", re.I)
 # Not \b(A\*|...)\b: \b after the literal "*" fails when "*" is followed by
 # whitespace (neither side is a "word" char), so "A*" would silently fall
 # through to the bare "A" alternative. Use letter-based lookaround instead.
+# Letter ranks are matched case-sensitively: with re.I, the lowercase word
+# "a" in prose ("...held in a single country") was being read as rank A.
 RANK_RE = re.compile(
     r"(?<![A-Za-z])(A\*|Australasian B|A|B|C)(?![A-Za-z*])"
-    r"|(unranked(?:\s*:\s*merged)?)\b", re.I)
+    r"|(?i:(unranked(?:\s*:\s*merged)?))\b")
+# Preferred: the page's own "Rank: <value>" label, which also carries
+# non-letter ranks like "National: USA" that RANK_RE can't express.
+RANK_LABEL_RE = re.compile(r"Rank:\s*([^\n]*\S)", re.I)
 FOR_CODE_RE = re.compile(
     r"(?:FoR|Field of Research)\D{0,20}(\d{3,6}(?:\s*,\s*\d{3,6})*)", re.I)
 DECISION_HINT_RE = re.compile(
@@ -173,13 +178,20 @@ def extract_rank_history(full_text):
             "block_text": merged[:800],
         })
 
+        label_m = RANK_LABEL_RE.search(merged)
         rank_m = RANK_RE.search(merged)
+        if label_m:
+            rank = label_m.group(1).strip()
+        elif rank_m:
+            rank = rank_m.group(1) or rank_m.group(2)
+        else:
+            rank = None
         for_m = FOR_CODE_RE.search(merged)
         decision_m = DECISION_HINT_RE.search(merged)
 
         rows.append({
             "round": round_label,
-            "rank": (rank_m.group(1) or rank_m.group(2)) if rank_m else None,
+            "rank": rank,
             "for_code": for_m.group(1) if for_m else None,
             "decision_phrase": decision_m.group(0).strip() if decision_m else None,
         })

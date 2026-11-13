@@ -40,3 +40,18 @@ def test_all_three_real_pages_resolve_dblp():
     for name in ["sigcomm.html", "sensys.html", "conext.html"]:
         _, _, review = parse_detail_page(INPUTS / name, None)
         assert review["dblp_source_url"] is not None, name
+
+
+def test_rank_label_preferred_over_prose_letters():
+    # NSDI's rank is "National: USA"; the old regex missed it and, in
+    # CORE2020, read the word "a" in the page's prose as rank A.
+    detail, links, review = parse_detail_page(INPUTS / "NSDI_1789.html", None)
+    ranks = {d["round"]: d["rank"] for d in detail}
+    for rnd in ("ICORE2026", "CORE2023", "CORE2021", "CORE2020"):
+        assert ranks[rnd] == "National: USA"
+    assert ranks["CORE2018"] == "B"
+
+
+def test_core2008_local_rank_not_misread():
+    detail, links, review = parse_detail_page(INPUTS / "ASPDAC_162.html", None)
+    assert next(d for d in detail if d["round"] == "CORE2008")["rank"] == "L"

@@ -21,7 +21,10 @@ from config import load_config  # noqa: E402
 from aliases import load_aliases, Alias, DEFAULT_ALIASES_PATH  # noqa: E402
 from ranks import rank_key  # noqa: E402
 
-DBLP_KEY_RE = re.compile(r"/db/([^?#]+?)/?$")
+# Strips a trailing "/index.html" (or bare ".html") so e.g.
+# ".../db/conf/sigcomm/index.html" and ".../db/conf/sigcomm" give the same
+# key — CCF's list uses both spellings for the same venue.
+DBLP_KEY_RE = re.compile(r"/db/([^?#]+?)(?:/index\.html?|\.html?)?/?(?:[?#].*)?$")
 
 ANALYSIS_COLUMNS = ["core_id", "acronym", "title", "join_key", "join_source",
                      "round", "rank", "for_code", "for_name",

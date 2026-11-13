@@ -171,10 +171,12 @@ def parse_html_table(path):
                           "the data. Try 'Webpage, Complete' or check "
                           "whether Export CSV works instead.")
 
-    # Prefer whichever table actually links to conf-ranks detail pages.
+    # Prefer whichever table actually links to conf-ranks detail pages —
+    # either via an <a href>, or (confirmed on real saved search pages) via
+    # the row's onclick="navigate('/conf-ranks/{id}/')".
     target = None
     for t in tables:
-        if t.find("a", href=DETAIL_URL_RE):
+        if t.find("a", href=DETAIL_URL_RE) or t.find("tr", onclick=DETAIL_URL_RE):
             target = t
             break
     if target is None:
@@ -194,16 +196,20 @@ def parse_html_table(path):
         if not cells:
             continue
         link = tr.find("a", href=DETAIL_URL_RE)
-        if not link:
+        href = link["href"] if link else None
+        if href is None and tr.get("onclick"):
+            m = DETAIL_URL_RE.search(tr["onclick"])
+            href = m.group(0) if m else None
+        if not href:
             issues.append({
                 "row_text": tr.get_text(" ", strip=True)[:200],
                 "issue": "no /conf-ranks/{core_id}/ link found in this row; skipped",
             })
             continue
-        m = DETAIL_URL_RE.search(link["href"])
+        m = DETAIL_URL_RE.search(href)
         row = {
             "core_id": m.group(1),
-            "detail_url": absolutize(link["href"]),
+            "detail_url": absolutize(f"/conf-ranks/{m.group(1)}/"),
         }
         for i, cell in enumerate(cells):
             key = headers[i] if i < len(headers) else f"col_{i}"

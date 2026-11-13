@@ -232,6 +232,42 @@ def process_row(row, image_path, cache_dir, model):
     return metric_records, ([label_record] if label_record else []), None
 
 
+CHART_FOR_RE = r"_FOR([A-Za-z0-9]+)_centileGraph"
+
+
+def filter_to_chart_for(in_scope, chart_for_csv):
+    """Keep only each mapped venue's chosen-FoR charts. If a venue has no
+    chart for its mapped FoR in some round/link_type, keep what it has for
+    that group (and say so) rather than silently losing the venue."""
+    mapping = (pd.read_csv(chart_for_csv, dtype=str)
+               .dropna(subset=["for_code"])
+               .set_index("core_id")["for_code"].to_dict())
+    df = in_scope.copy()
+    df["_cid"] = df["core_id"].astype(str)
+    df["_for"] = df["url"].str.extract(CHART_FOR_RE)[0]
+    df["_want"] = df["_cid"].map(mapping)
+    keep = []
+    fallbacks = []
+    for _, g in df.groupby(["_cid", "round", "link_type"], sort=False):
+        want = g["_want"].iloc[0]
+        if pd.isna(want):
+            keep.append(g)
+        elif (g["_for"] == want).any():
+            keep.append(g[g["_for"] == want])
+        else:
+            keep.append(g)
+            fallbacks.append(f"{g['_cid'].iloc[0]}/{g['round'].iloc[0]}/"
+                             f"{g['link_type'].iloc[0]} (want {want}, have "
+                             f"{','.join(g['_for'].dropna())})")
+    out = pd.concat(keep).drop(columns=["_cid", "_for", "_want"])
+    print(f"chart FoR filter ({chart_for_csv.name}): {len(in_scope)} -> "
+          f"{len(out)} link(s)", file=sys.stderr)
+    for f in fallbacks:
+        print(f"  warning: no chart in mapped FoR, keeping all: {f}",
+              file=sys.stderr)
+    return out
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Read ICORE h-index/citation centile charts (local "
@@ -243,6 +279,19 @@ def main(argv=None):
                          help="Default: <images_dir> from config.yaml.")
     parser.add_argument("--out-dir", type=Path, default=None,
                          help="Default: <data_dir> from config.yaml.")
+    parser.add_argument("--chart-for-csv", type=Path, default=None,
+                         help="CSV of core_id,for_code: for those venues, "
+                              "only read the chart for that FoR (charts are "
+                              "per-FoR percentiles, and icore_metrics has no "
+                              "FoR column — two FoRs' charts for one venue "
+                              "would collide). Default: <data_dir>/"
+                              "chart_for_code.csv if present. Venues not "
+                              "listed keep every chart (old behaviour).")
+    parser.add_argument("--reuse-existing", action="store_true",
+                         help="Reuse rows already in icore_metrics.parquet "
+                              "for images already read (matched by "
+                              "raw_payload_ref) instead of re-sending them "
+                              "to the vision model.")
     parser.add_argument("--config", type=Path, default=None)
     args = parser.parse_args(argv)
 
@@ -266,6 +315,23 @@ def main(argv=None):
     print(f"{len(in_scope)} h_index/citation link(s) in scope "
           f"(rounds: {cfg.in_scope_rounds})", file=sys.stderr)
 
+    chart_for_csv = args.chart_for_csv or (out_dir / "chart_for_code.csv")
+    if chart_for_csv.exists():
+        in_scope = filter_to_chart_for(in_scope, chart_for_csv)
+
+    previous_metrics, previous_labels = {}, {}
+    if args.reuse_existing and (out_dir / "icore_metrics.parquet").exists():
+        prev = pd.read_parquet(out_dir / "icore_metrics.parquet")
+        prev["core_id"] = prev["core_id"].astype(str)
+        previous_metrics = {k: g.to_dict("records")
+                            for k, g in prev.groupby("raw_payload_ref")}
+        labels_csv = out_dir / "icore_metrics_labels.csv"
+        if labels_csv.exists():
+            pl = pd.read_csv(labels_csv, dtype=str)
+            previous_labels = {(r["core_id"], r["round"], r["link_type"]): r
+                               for r in pl.to_dict("records")}
+    n_reused = 0
+
     metric_rows, label_rows, unmatched_rows = [], [], []
     for _, row in in_scope.iterrows():
         # The 2026- and 2023-round chart URLs for the same venue/link_type
@@ -284,6 +350,14 @@ def main(argv=None):
                           f"(path is images/<round>/<basename>; see "
                           f"list_downloads.py for the exact list)",
             })
+            continue
+        ref = f"{cache_dir.name}/{row['round']}/{basename}"
+        if ref in previous_metrics:
+            metric_rows.extend(previous_metrics[ref])
+            lab = previous_labels.get((str(row["core_id"]), row["round"], row["link_type"]))
+            if lab:
+                label_rows.append(lab)
+            n_reused += 1
             continue
         recs, labels, err = process_row(row, image_path, cache_dir, cfg.anthropic.model)
         if err:
@@ -321,6 +395,10 @@ def main(argv=None):
         unmatched_df = pd.concat([existing, unmatched_df], ignore_index=True)
     unmatched_df.to_csv(unmatched_path, index=False)
 
+    if args.reuse_existing:
+        print(f"reused {n_reused} previously-extracted chart(s); "
+              f"{len(in_scope) - n_reused - len(unmatched_rows)} sent to the "
+              f"vision model", file=sys.stderr)
     n_covered = in_scope.shape[0] - len(unmatched_rows)
     print(f"coverage: {n_covered}/{len(in_scope)} in-scope links extracted "
           f"({len(unmatched_rows)} logged to {unmatched_path})",
