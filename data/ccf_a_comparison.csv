@@ -1,0 +1,59 @@
+ccf_abbr,core_acronym,core_id,ccf_category,core_rank,rank_group,chart_for,citation_venue_pct,citation_field_A_star_pct,citation_field_A_pct,citation_gap_vs_A_star,citation_A_tier_gap_vs_A_star,author_strength_venue_pct,author_strength_field_A_star_pct,author_strength_field_A_pct,author_strength_gap_vs_A_star,author_strength_A_tier_gap_vs_A_star
+CVPR,CVPR,604,Artificial Intelligence,A*,A*,4603,81,47,18,34,-29,50,36,28,14,-8
+SIGCOMM,SIGCOMM,11,Computer Networks,A*,A*,4606,95,66,43,29,-23,48,44,36,4,-8
+NSDI,NSDI,1789,Computer Networks,National: USA,Below A / other,4606,93,66,43,27,-23,49,44,36,5,-8
+FAST,FAST,1839,Architecture / parallel / storage,A,A,4605,80,53,31,27,-22,23,42,27,-19,-15
+ACL,ACL,196,Artificial Intelligence,A*,A*,4602,76,49,32,27,-17,45,39,31,6,-8
+ICSE,ICSE,1209,Software eng. / systems / PL,A*,A*,4612,84,58,34,26,-24,52,43,30,9,-13
+OSDI,OSDI,1842,Software eng. / systems / PL,A*,A*,4606,92,66,43,26,-23,44,44,36,0,-8
+SOSP,SOSP,48,Software eng. / systems / PL,A*,A*,4606,87,66,43,21,-23,39,44,36,-5,-8
+ASPLOS,ASPLOS,147,Architecture / parallel / storage,A*,A*,4606,87,66,43,21,-23,39,44,36,-5,-8
+ISCA,ISCA,32,Architecture / parallel / storage,A*,A*,4606,87,66,43,21,-23,40,44,36,-4,-8
+SIGGRAPH,SIGGRAPH,38,Graphics / multimedia,A*,A*,4607,81,60,32,21,-28,47,43,29,4,-14
+STOC,STOC,65,Computer Science Theory,A*,A*,4613,81,61,26,20,-35,43,41,30,2,-11
+S&P,SP,750,Security,A*,A*,4604,85,67,32,18,-35,51,44,34,7,-10
+ICCV,ICCV,638,Artificial Intelligence,A*,A*,4603,64,47,18,17,-29,47,36,28,11,-8
+ICLR,ICLR,2273,Artificial Intelligence,A*,A*,4611,60,43,19,17,-24,44,35,23,9,-12
+ACM SIGOPS ATC,USENIX,1838,Architecture / parallel / storage,A,A,4606,83,66,43,17,-23,39,44,36,-5,-8
+HPCA,HPCA,1386,Architecture / parallel / storage,A*,A*,4606,82,66,43,16,-23,35,44,36,-9,-8
+USENIX Security,USENIX-Security,1841,Security,A*,A*,4604,83,67,32,16,-35,49,44,34,5,-10
+EuroSys,EuroSys,525,Architecture / parallel / storage,A,A,4606,81,66,43,15,-23,33,44,36,-11,-8
+ISSTA,ISSTA,1412,Software eng. / systems / PL,A,A,4612,71,58,34,13,-24,39,43,30,-4,-13
+WWW,WWW,1548,Cross-disciplinary,A*,A*,4606,77,66,43,11,-23,49,44,36,5,-8
+FOCS,FOCS,745,Computer Science Theory,A*,A*,4613,71,61,26,10,-35,42,41,30,1,-11
+PLDI,PLDI,84,Software eng. / systems / PL,A*,A*,4612,67,58,34,9,-24,43,43,30,0,-13
+IEEE VIS,IEEE VIS,759,Graphics / multimedia,A,A,4608,78,70,36,8,-34,61,41,29,20,-12
+SIGIR,SIGIR,29,Databases / data mining / IR,A*,A*,4605,60,53,31,7,-22,40,42,27,-2,-15
+MICRO,MICRO,2098,Architecture / parallel / storage,A*,A*,CSE,66,60,32,6,-28,38,43,29,-5,-14
+SODA,SODA,80,Computer Science Theory,A*,A*,4613,67,61,26,6,-35,45,41,30,4,-11
+SIGKDD,KDD,26,Databases / data mining / IR,A*,A*,4605,58,53,31,5,-22,47,42,27,5,-15
+NeurIPS,NeurIPS,98,Artificial Intelligence,A*,A*,4611,47,43,19,4,-24,38,35,23,3,-12
+AAAI,AAAI,1629,Artificial Intelligence,A*,A*,4602,53,49,32,4,-17,41,39,31,2,-8
+CHI,CHI,1053,HCI / pervasive,A*,A*,4608,73,70,36,3,-34,36,41,29,-5,-12
+VR,VR,758,Graphics / multimedia,A*,A*,4607,63,60,32,3,-28,22,43,29,-21,-14
+NDSS,NDSS,1840,Security,A*,A*,4604,69,67,32,2,-35,50,44,34,6,-10
+POPL,POPL,82,Software eng. / systems / PL,A*,A*,4612,60,58,34,2,-24,32,43,30,-11,-13
+INFOCOM,INFOCOM,2074,Computer Networks,A*,A*,4606,67,66,43,1,-23,52,44,36,8,-8
+MobiCom,MOBICOM,27,Computer Networks,A*,A*,4606,66,66,43,0,-23,58,44,36,14,-8
+ICML,ICML,1121,Artificial Intelligence,A*,A*,4611,43,43,19,0,-24,35,35,23,0,-12
+SIGMOD,SIGMOD,56,Databases / data mining / IR,A*,A*,4605,51,53,31,-2,-22,38,42,27,-4,-15
+VLDB,VLDB,1261,Databases / data mining / IR,A*,A*,4605,51,53,31,-2,-22,40,42,27,-2,-15
+UIST,UIST,66,HCI / pervasive,A*,A*,4608,65,70,36,-5,-34,53,41,29,12,-12
+FSE,FSE,52,Software eng. / systems / PL,A*,A*,4612,52,58,34,-6,-24,45,43,30,2,-13
+CCS,CCS,12,Security,A*,A*,4604,58,67,32,-9,-35,43,44,34,-1,-10
+SC,SC,77,Architecture / parallel / storage,A,A,4606,55,66,43,-11,-23,41,44,36,-3,-8
+ICDE,ICDE,986,Databases / data mining / IR,A*,A*,4605,39,53,31,-14,-22,48,42,27,6,-15
+CSCW,CSCW,13,HCI / pervasive,A,A,4608,54,70,36,-16,-34,38,41,29,-3,-12
+ACM MM,ACMMM,37,Graphics / multimedia,A*,A*,4603,29,47,18,-18,-29,34,36,28,-2,-8
+EUROCRYPT,EuroCrypt,1242,Security,A*,A*,4604,48,67,32,-19,-35,32,44,34,-12,-10
+OOPSLA,OOPSLA,18,Software eng. / systems / PL,A,A,4612,37,58,34,-21,-24,41,43,30,-2,-13
+ASE,ASE,279,Software eng. / systems / PL,A*,A*,4612,37,58,34,-21,-24,36,43,30,-7,-13
+PPoPP,PPoPP,1691,Architecture / parallel / storage,B,Below A / other,4606,44,66,43,-22,-23,29,44,36,-15,-8
+CAV,CAV,331,Computer Science Theory,A*,A*,4612,36,58,34,-22,-24,32,43,30,-11,-13
+CRYPTO,CRYPTO,94,Security,A*,A*,4604,43,67,32,-24,-35,33,44,34,-11,-10
+LICS,LICS,748,Computer Science Theory,A*,A*,4613,35,61,26,-26,-35,19,41,30,-22,-11
+DAC,DAC,1996,Architecture / parallel / storage,A*,A*,CSE,34,60,32,-26,-28,36,43,29,-7,-14
+HPDC,HPDC,33,Architecture / parallel / storage,A,A,4606,39,66,43,-27,-23,31,44,36,-13,-8
+FM,FM,540,Software eng. / systems / PL,B,Below A / other,4612,24,58,34,-34,-24,17,43,30,-26,-13
+RTSS,RTSS,1701,Cross-disciplinary,A,A,4606,30,66,43,-36,-23,22,44,36,-22,-8
+UbiComp,UbiComp,1825,HCI / pervasive,journal published,Below A / other,4608,10,70,36,-60,-34,28,41,29,-13,-12
