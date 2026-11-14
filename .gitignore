@@ -4,8 +4,11 @@ inputs/
 images/
 pdfs/
 
-# Everything the pipeline generates from those inputs.
-data/
+# Everything the pipeline generates from those inputs — except the
+# generated download scripts (data/*.sh), which are tracked so the exact
+# fetch list behind a dataset is recorded.
+data/*
+!data/*.sh
 extracted/
 cache/
 
